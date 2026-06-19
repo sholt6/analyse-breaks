@@ -2,7 +2,12 @@
 
 import csv
 import argparse
+import logging
+from pathlib import Path
+from collections.abc import Generator
 
+
+# Set up argument parser
 parser = argparse.ArgumentParser(
     prog="mapq_filter_reads.py",
     description="""Accepts a BED file containing break sites identified by
@@ -17,38 +22,43 @@ parser.add_argument('input_bed',
 parser.add_argument('filtered_bed',
                     help="""desired path to output filtered BED""")
 
-parser.add_argument('mapq_threshold', type=int, default=30,
+parser.add_argument('-q', '--mapq_threshold', type=int, default=30,
                     help="""path to an INDUCE-seq breaks BED""")
 
+parser.add_argument('-l', '--log-file', default='mapq_filter_reads.log',
+                     help="""path to log file""")
 
-def bed_reader(file_name):
+
+# Functions
+def bed_reader(file_name: str) -> Generator[list[str], None, None]:
     with open(file_name, "r") as file:
         reader = csv.reader(file, delimiter="\t")
         for row in reader:
             yield row
 
 
-def filter_by_score(rows, min_score=30):
-    for row in rows:
-        if int(row[4]) >= min_score:
-            yield row
-
-
-def main():
+def main() -> None:
     args = parser.parse_args()
+
+    logging.basicConfig(filename=args.log_file, level=logging.INFO, format="[%(asctime)s] %(levelname)s - %(message)s")
+    logger = logging.getLogger(Path(__file__).stem)
+
+    logger.info(f"Starting filtering with args: {args}")
 
     input_bed = args.input_bed
     filtered_bed = args.filtered_bed
     mapq_threshold = args.mapq_threshold
 
     read_bed = bed_reader(input_bed)
-    filtered_bed_rows = filter_by_score(read_bed, mapq_threshold)
-    
+
+    filtered_bed_rows = ( row for row in read_bed if int(row[4]) >= mapq_threshold )
+
     with open(filtered_bed, "w", newline="") as outfile:
         writer = csv.writer(outfile, delimiter="\t", lineterminator="\n")
         for row in filtered_bed_rows:
             writer.writerow(row)
 
+    logger.info(f"Filtering completed and written to {filtered_bed}")
 
 if __name__ == "__main__":
     main()
