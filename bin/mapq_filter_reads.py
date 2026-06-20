@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import csv
 import argparse
@@ -19,10 +19,10 @@ parser = argparse.ArgumentParser(
 parser.add_argument('input_bed',
                     help="""path to an INDUCE-seq breaks BED""")
 
-parser.add_argument('filtered_bed',
+parser.add_argument('filtered-bed',
                     help="""desired path to output filtered BED""")
 
-parser.add_argument('-q', '--mapq_threshold', type=int, default=30,
+parser.add_argument('-q', '--mapq-threshold', type=int, default=30,
                     help="""path to an INDUCE-seq breaks BED""")
 
 parser.add_argument('-l', '--log-file', default='mapq_filter_reads.log',
@@ -40,7 +40,8 @@ def bed_reader(file_name: str) -> Generator[list[str], None, None]:
 def main() -> None:
     args = parser.parse_args()
 
-    logging.basicConfig(filename=args.log_file, level=logging.INFO, format="[%(asctime)s] %(levelname)s - %(message)s")
+    logging.basicConfig(filename=args.log_file, level=logging.INFO, 
+                        format="[%(asctime)s] %(levelname)s - %(message)s")
     logger = logging.getLogger(Path(__file__).stem)
 
     logger.info(f"Starting filtering with args: {args}")
