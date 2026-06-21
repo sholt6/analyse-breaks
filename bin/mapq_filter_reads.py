@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument('input_bed',
                     help="""path to an INDUCE-seq breaks BED""")
 
-parser.add_argument('filtered-bed',
+parser.add_argument('filtered_bed',
                     help="""desired path to output filtered BED""")
 
 parser.add_argument('-q', '--mapq-threshold', type=int, default=30,
