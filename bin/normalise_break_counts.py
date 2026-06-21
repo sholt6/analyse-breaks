@@ -34,8 +34,6 @@ parser.add_argument('canonical_bed',
 parser.add_argument('-o', '--output-file', default="sample.counts.tsv",
                     help="""desired path to output TSV""")
 
-parser.add_argument('-s', '--sample-name', type=str, default="sample",
-                    help="""sample name to be used in output""")
 
 parser.add_argument('-n', '--normalisation-value', type=positive_int, 
                     default=1000,
@@ -51,13 +49,17 @@ parser.add_argument('-l', '--log-file', default='mapq_filter_reads.log',
                     help="""path to log file""")
 
 
+def get_sample_name(raw_bed: str) -> str:
+    return raw_bed.split("/")[-1].split('.')[0]
+
 
 def count_lines(file_name: str) -> int:
     return sum(1 for _ in open(file_name))
 
 
-def normalise_counts(raw_sites_count, canonical_sites_count, 
-                     normalisation_value, rounding_value) -> float:
+def normalise_counts(raw_sites_count: int, canonical_sites_count: int, 
+                     normalisation_value: int, rounding_value: int) -> float:
+    
     if raw_sites_count == 0:
         return 0
     
@@ -66,11 +68,14 @@ def normalise_counts(raw_sites_count, canonical_sites_count,
         rounding_value )
 
 
-def write_results(sample_name, raw_sites_count, 
-                  canonical_sites_count, normalised_count, output_file) -> None:
+def write_results(sample_name: str, raw_sites_count: int,
+                  canonical_sites_count: int, normalised_count: float,
+                  output_file: str) -> None:
+
     with open(output_file, "w", newline="") as outfile:
         writer = csv.writer(outfile, delimiter="\t", lineterminator="\n")
-        writer.writerow([sample_name, raw_sites_count, canonical_sites_count, normalised_count])
+        writer.writerow([sample_name, raw_sites_count,
+                         canonical_sites_count, normalised_count])
 
 
 # Functions
@@ -86,9 +91,10 @@ def main() -> None:
     raw_bed = args.raw_bed
     canonical_bed = args.canonical_bed
     output_file = args.output_file
-    sample_name = args.sample_name
     normalisation_value = args.normalisation_value
     rounding_value = args.rounding_value
+
+    sample_name = get_sample_name(raw_bed)
 
     raw_sites_count = count_lines(raw_bed)
     canonical_sites_count = count_lines(canonical_bed)
