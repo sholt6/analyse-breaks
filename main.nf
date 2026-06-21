@@ -55,7 +55,7 @@ process collectStats {
         path (countsTSVs)
 
     output:
-        path('all_samples.counts.tsv')
+        path('all_samples.counts.tsv'), emit: collectedStatsTSV
 
     script:
     """
@@ -78,26 +78,25 @@ process collectStats {
     """
 }
 
-    // import csv
-    // files = "$countsTSVs"
+process plotStats {
+    conda "$projectDir/env/plot-stats.yml"
 
-    // with open("all_samples.counts.tsv", "w") as out:
-    //     writer = csv.writer(out, delimiter="\t", lineterminator="\n")
-    //     writer.writerow(["sample_name", "total_breaks", "canonical_breaks", "normalised_breaks"])
+    publishDir 'results', mode: 'symlink'
 
-    //     for f in files:
-    //         with open(f, "r") as input:
-    //             out.write(input.read())
+    input:
+        path collectedStatsTSV
+        val experimentName
 
+    output:
+        file('*.qc_plots.png')
+        file('*.assignments.tsv')
+        file('*.summary.txt')
 
-// process plotStats {
-//     input:
-
-//     output:
-
-//     script:
-    
-// }
+    script:
+    """
+        plot_stats.py "$collectedStatsTSV" -o "$experimentName"
+    """
+}
 
 workflow {
 
@@ -108,8 +107,10 @@ workflow {
 
     intersected_ch = bedIntersectResctrictionSites(filtered_ch, params.referenceBED)
 
-    normalised_ch = countNormaliseBreaks(intersected_ch, params.normalisation_value)
+    normalised_ch = countNormaliseBreaks(intersected_ch, params.normalisationValue)
 
     collectStats(normalised_ch.collect())
+
+    plotStats(collectStats.out.collectedStatsTSV, params.experimentName)
 
 }
