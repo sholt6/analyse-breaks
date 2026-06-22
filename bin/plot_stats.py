@@ -2,7 +2,6 @@
 
 import argparse
 import logging
-import csv
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -28,6 +27,9 @@ parser.add_argument('tsv',
 
 parser.add_argument('-o', '--output-prefix', default="results",
                     help="""prefix to be used on all output files""")
+
+parser.add_argument('-l', '--log-file', default='plot_stats.log',
+                    help="""path to log file""")
 
 @dataclass
 class MWResult:
@@ -153,21 +155,34 @@ def run_mann_whitney(clustered_df) -> None:
 
 
 def report_results(qc_plots, clustering_results_df,
-                   mann_whitney_result, output_prefix) -> None:
+                   mann_whitney_result, output_prefix) -> list[str]:
     
-    qc_plots.savefig(f"{output_prefix}.qc_plots.png")
+    clustering_results_csv = f"{output_prefix}.assignments.tsv"
+    qc_plots_png = f"{output_prefix}.qc_plots.png"
+    summary_txt = f"{output_prefix}.summary.txt"
 
-    clustering_results_df.to_csv(f"{output_prefix}.assignments.tsv", 
+    qc_plots.savefig(qc_plots_png)
+
+    clustering_results_df.to_csv(clustering_results_csv, 
                                  sep="\t", float_format="%.6f")
 
     summary_lines = mann_whitney_result.summary_lines()
 
-    with open(f"{output_prefix}.summary.txt", "w") as f:
-        f.write("\n".join(f"{label}:\t{item}" for label, item in summary_lines) + "\n")
+    with open(summary_txt, "w") as f:
+        f.write("\n".join(f"{label}:\t{item}" 
+                          for label, item in summary_lines) + "\n")
+
+    return [clustering_results_csv, qc_plots_png, summary_txt]
 
 
 def main() -> None:
     args = parser.parse_args()
+
+    logging.basicConfig(filename=args.log_file, level=logging.INFO, 
+                        format="[%(asctime)s] %(levelname)s - %(message)s")
+    logger = logging.getLogger(Path(__file__).stem)
+    
+    logger.info(f"Starting results plotting with args: {args}")
 
     counts_tsv = args.tsv
     output_prefix = args.output_prefix
@@ -181,7 +196,9 @@ def main() -> None:
 
     mann_whitney_result = run_mann_whitney(clustering_results_df)
 
-    report_results(qc_plots, clustering_results_df, mann_whitney_result, output_prefix)
+    results_files = report_results(qc_plots, clustering_results_df, mann_whitney_result, output_prefix)
+
+    logger.info(f"Completed results plotting and output to: {results_files}")
 
 
 if __name__ == "__main__":

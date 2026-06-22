@@ -45,7 +45,7 @@ parser.add_argument('-r', '--rounding-value', type=positive_int,
                     help="""normalised counts will be rounded to this many
                     decimal places""")
 
-parser.add_argument('-l', '--log-file', default='mapq_filter_reads.log',
+parser.add_argument('-l', '--log-file', default='normalise_break_counts.log',
                     help="""path to log file""")
 
 
