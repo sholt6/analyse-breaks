@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
+import time
 import csv
 import argparse
 import logging
+from typing import Callable
 from pathlib import Path
 from collections.abc import Generator
 
@@ -30,6 +32,21 @@ parser.add_argument('-l', '--log-file', default='mapq_filter_reads.log',
 
 
 # Functions
+def time_log(logger_name: str) -> Callable:
+    """Decorator which measures duration of a function call and adds directly to log file"""
+    def wrapper(func: Callable):
+        def wrapper_func(*args, **kwargs):
+            logger = logging.getLogger(logger_name)
+            start = time.perf_counter()
+            result = func(*args, **kwargs)
+            end = time.perf_counter()
+            logger.info(f"Function {func.__name__} completed in {end - start:.4f} seconds")
+            return result
+        return wrapper_func
+    return wrapper
+
+
+@time_log("logger")
 def bed_reader(file_name: str) -> Generator[list[str], None, None]:
     with open(file_name, "r") as file:
         reader = csv.reader(file, delimiter="\t")
@@ -37,6 +54,7 @@ def bed_reader(file_name: str) -> Generator[list[str], None, None]:
             yield row
 
 
+@time_log("logger")
 def main() -> None:
     args = parser.parse_args()
 
