@@ -4,8 +4,7 @@ import time
 import csv
 import argparse
 import logging
-from typing import Callable
-from typing import Generator
+from typing import Callable, Generator
 from pathlib import Path
 from collections.abc import Generator
 
@@ -35,7 +34,7 @@ parser.add_argument('-l', '--log-file', default='mapq_filter_reads.log',
 # Functions
 def time_log(logger_name: str) -> Callable:
     """Decorator which measures duration of a function call and adds directly to log file"""
-    def wrapper(func: Callable):
+    def wrapper(func: Callable) -> Callable:
         def wrapper_func(*args, **kwargs):
             logger = logging.getLogger(logger_name)
             start = time.perf_counter()
@@ -86,6 +85,7 @@ def main() -> None:
     filter_bed(read_bed, mapq_threshold, filtered_bed)
 
     logger.info(f"Filtering completed and written to {filtered_bed}")
+
 
 if __name__ == "__main__":
     main()

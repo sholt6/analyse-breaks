@@ -3,7 +3,10 @@
 import argparse
 import logging
 import csv
+import time
 from pathlib import Path
+from typing import Callable
+from dataclasses import dataclass
 
 
 # Set up argument parser
@@ -49,17 +52,51 @@ parser.add_argument('-l', '--log-file', default='normalise_break_counts.log',
                     help="""path to log file""")
 
 
+@dataclass
+class NormalisationResult:
+    sample_name: str=""
+    raw_sites_count: int=0
+    canonical_sites_count: int=0
+    normalised_count: float=0.0
+
+    def summary(self):
+        return [self.sample_name, 
+                self.raw_sites_count, 
+                self.canonical_sites_count,
+                self.normalised_count]
+
+
+# Functions
+def time_log(logger_name: str) -> Callable:
+    """Decorator which measures duration of a function call and adds directly to log file"""
+    def wrapper(func: Callable) -> Callable:
+        def wrapper_func(*args, **kwargs):
+            logger = logging.getLogger(logger_name)
+            start = time.perf_counter()
+            result = func(*args, **kwargs)
+            end = time.perf_counter()
+            logger.info(f"Function {func.__name__} completed in {end - start:.4f} seconds")
+            return result
+        return wrapper_func
+    return wrapper
+
+
+@time_log("logger")
 def get_sample_name(raw_bed: str) -> str:
+    """Extracts sample name from file name, expected format: <sample-name>.breakends.bed"""
     return raw_bed.split("/")[-1].split('.')[0]
 
 
+@time_log("logger")
 def count_lines(file_name: str) -> int:
+    """Counts lines in given file and enables timing of this operation"""
     return sum(1 for _ in open(file_name))
 
 
+@time_log("logger")
 def normalise_counts(raw_sites_count: int, canonical_sites_count: int, 
                      normalisation_value: int, rounding_value: int) -> float:
-    
+    """Normalises count of canonical sites against total sites and renders more readable"""    
     if raw_sites_count == 0:
         return 0
     
@@ -68,17 +105,18 @@ def normalise_counts(raw_sites_count: int, canonical_sites_count: int,
         rounding_value )
 
 
-def write_results(sample_name: str, raw_sites_count: int,
-                  canonical_sites_count: int, normalised_count: float,
-                  output_file: str) -> None:
-
+@time_log("logger")
+def write_results(result: NormalisationResult, output_file: str) -> None:
+    """Writes results to specified output file"""
     with open(output_file, "w", newline="") as outfile:
         writer = csv.writer(outfile, delimiter="\t", lineterminator="\n")
-        writer.writerow([sample_name, raw_sites_count,
-                         canonical_sites_count, normalised_count])
+        writer.writerow([result.sample_name, 
+                         result.raw_sites_count,
+                         result.canonical_sites_count, 
+                         result.normalised_count])
 
 
-# Functions
+@time_log("logger")
 def main() -> None:
     args = parser.parse_args()
 
@@ -94,22 +132,25 @@ def main() -> None:
     normalisation_value = args.normalisation_value
     rounding_value = args.rounding_value
 
-    sample_name = get_sample_name(raw_bed)
+    result = NormalisationResult()
 
-    raw_sites_count = count_lines(raw_bed)
-    canonical_sites_count = count_lines(canonical_bed)
+    result.sample_name = get_sample_name(raw_bed)
 
-    if raw_sites_count == 0:
-        logger.warning(f"No entries in raw breaks BED")
+    result.raw_sites_count = count_lines(raw_bed)
+    result.canonical_sites_count = count_lines(canonical_bed)
 
-    normalised_count = normalise_counts(raw_sites_count, canonical_sites_count,
-                                        normalisation_value, rounding_value)
+    if result.raw_sites_count == 0:
+        logger.warning(f"No entries in raw breaks BED: {raw_bed}")
 
-    write_results(sample_name, raw_sites_count, canonical_sites_count, 
-                  normalised_count, output_file)
+    result.normalised_count = normalise_counts(result.raw_sites_count, 
+                                               result.canonical_sites_count,
+                                               normalisation_value, 
+                                               rounding_value)
 
+    write_results(result, output_file)
 
     logger.info(f"Normalisation completed and written to {output_file}")
+
 
 if __name__ == "__main__":
     main()

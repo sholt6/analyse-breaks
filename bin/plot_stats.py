@@ -2,14 +2,13 @@
 
 import argparse
 import logging
+import time
 import numpy as np
 import matplotlib.pyplot as plt
-
 import pandas as pd
+from pathlib import Path
 from sklearn.mixture import GaussianMixture
-
 from scipy.stats import mannwhitneyu
-
 from dataclasses import dataclass
 
 
@@ -30,6 +29,7 @@ parser.add_argument('-o', '--output-prefix', default="results",
 
 parser.add_argument('-l', '--log-file', default='plot_stats.log',
                     help="""path to log file""")
+
 
 @dataclass
 class MWResult:
@@ -55,8 +55,24 @@ class MWResult:
         ]
 
 
+# Functions
+def time_log(logger_name: str) -> Callable:
+    """Decorator which measures duration of a function call and adds directly to log file"""
+    def wrapper(func: Callable) -> Callable:
+        def wrapper_func(*args, **kwargs):
+            logger = logging.getLogger(logger_name)
+            start = time.perf_counter()
+            result = func(*args, **kwargs)
+            end = time.perf_counter()
+            logger.info(f"Function {func.__name__} completed in {end - start:.4f} seconds")
+            return result
+        return wrapper_func
+    return wrapper
+
+
+@time_log("logger")
 def make_qc_plots(breaks) -> plt.figure:
-    
+    """Creates basic QC plots: boxplot, histogram, violin plot"""
     fig, axs = plt.subplots(1, 3, figsize=(10, 5))
 
     axs[0].boxplot(breaks)
@@ -79,7 +95,10 @@ def make_qc_plots(breaks) -> plt.figure:
     return fig
 
 
+@time_log("logger")
 def cluster_samples(counts_tsv) -> pd.DataFrame:
+    """Performs Gaussian Mixture clustering and assigns samples as control, 
+    treated, or ambiguous"""
     df = pd.read_csv(counts_tsv, sep="\t")
 
     breaks = df[['normalised_breaks']].to_numpy()
@@ -119,7 +138,10 @@ def cluster_samples(counts_tsv) -> pd.DataFrame:
     return df
 
 
+@time_log("logger")
 def run_mann_whitney(clustered_df) -> None:
+    """Performs Mann-Whitney U test to quantify difference between control 
+    and treated groups"""
     controls = clustered_df.loc[
         clustered_df["group"] == "control",
         "normalised_breaks"
@@ -154,8 +176,10 @@ def run_mann_whitney(clustered_df) -> None:
     )
 
 
+@time_log("logger")
 def report_results(qc_plots, clustering_results_df,
                    mann_whitney_result, output_prefix) -> list[str]:
+    """Creates all report files"""
     
     clustering_results_csv = f"{output_prefix}.assignments.tsv"
     qc_plots_png = f"{output_prefix}.qc_plots.png"
@@ -175,6 +199,7 @@ def report_results(qc_plots, clustering_results_df,
     return [clustering_results_csv, qc_plots_png, summary_txt]
 
 
+@time_log("logger")
 def main() -> None:
     args = parser.parse_args()
 
@@ -191,11 +216,8 @@ def main() -> None:
     breaks = df[['normalised_breaks']]
 
     qc_plots = make_qc_plots(breaks)
-
     clustering_results_df = cluster_samples(counts_tsv)
-
     mann_whitney_result = run_mann_whitney(clustering_results_df)
-
     results_files = report_results(qc_plots, clustering_results_df, mann_whitney_result, output_prefix)
 
     logger.info(f"Completed results plotting and output to: {results_files}")
