@@ -5,6 +5,7 @@ import csv
 import argparse
 import logging
 from typing import Callable
+from typing import Generator
 from pathlib import Path
 from collections.abc import Generator
 
@@ -48,10 +49,22 @@ def time_log(logger_name: str) -> Callable:
 
 @time_log("logger")
 def bed_reader(file_name: str) -> Generator[list[str], None, None]:
+    """Generator for more memory-safe BED file reading"""
     with open(file_name, "r") as file:
         reader = csv.reader(file, delimiter="\t")
         for row in reader:
             yield row
+
+
+@time_log("logger")
+def filter_bed(read_bed: Generator[list[str], None, None], mapq_threshold: int,
+                filtered_bed: str) -> None:
+    """Iterates over bed_reader and filters on specified MapQ.
+    Outputs directly to filtered BED"""
+    with open(filtered_bed, "w", newline="") as outfile:
+        writer = csv.writer(outfile, delimiter="\t", lineterminator="\n")
+        for row in (row for row in read_bed if int(row[4]) >= mapq_threshold):
+            writer.writerow(row)
 
 
 @time_log("logger")
@@ -70,12 +83,7 @@ def main() -> None:
 
     read_bed = bed_reader(input_bed)
 
-    filtered_bed_rows = ( row for row in read_bed if int(row[4]) >= mapq_threshold )
-
-    with open(filtered_bed, "w", newline="") as outfile:
-        writer = csv.writer(outfile, delimiter="\t", lineterminator="\n")
-        for row in filtered_bed_rows:
-            writer.writerow(row)
+    filter_bed(read_bed, mapq_threshold, filtered_bed)
 
     logger.info(f"Filtering completed and written to {filtered_bed}")
 
