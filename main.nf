@@ -1,24 +1,22 @@
 process mapQFilterReads {
     input:
         tuple val(id), path(breaksBED)
-        val mapQThreshold
 
     output:
         tuple val(id), path(breaksBED), path("${id}.filtered.bed")
 
     script:
     """
-        mapq_filter_reads.py "${breaksBED}" "${id}.filtered.bed" -q "${mapQThreshold}" -l "${id}.mapq_filter_reads.log"
+        mapq_filter_reads.py "${breaksBED}" "${id}.filtered.bed" -q "${params.mapQThreshold}" -l "${id}.mapq_filter_reads.log"
     """
 
 }
 
-process bedIntersectResctrictionSites {
+process bedIntersectRestrictionSites {
     conda 'bioconda::bedtools==2.31'
 
     input:
         tuple val(id), path(originalBED), path(filteredBED)
-        path referenceBED
 
     output:
         tuple val(id), path(originalBED), path("${id}.filtered.intersected.bed")
@@ -27,7 +25,7 @@ process bedIntersectResctrictionSites {
     """
     bedtools intersect \
         -a "${filteredBED}" \
-        -b "${referenceBED}" \
+        -b "${params.referenceBED}" \
         > "${id}.filtered.intersected.bed"
     """
 }
@@ -35,7 +33,6 @@ process bedIntersectResctrictionSites {
 process countNormaliseBreaks {
     input:
         tuple val(id), path(originalBED), path(intersectedBED)
-        val normalisation_value
 
     output:
         path('*.counts.tsv'), emit: countsTSV
@@ -46,7 +43,7 @@ process countNormaliseBreaks {
             "${originalBED}" \
             "${intersectedBED}" \
             -o "${id}.counts.tsv" \
-            -n "${normalisation_value}"
+            -n "${params.normalisationValue}"
     """
 }
 
@@ -100,17 +97,14 @@ process plotStats {
 
 workflow {
 
-    beds_ch = Channel.fromPath("${params.input_dir}/*.bed")
+    beds = Channel.fromPath("${params.input_dir}/*.bed")
                      .map( bed -> tuple(bed.baseName, bed))
-    
-    filtered_ch = mapQFilterReads(beds_ch, params.mapQThreshold)
 
-    intersected_ch = bedIntersectResctrictionSites(filtered_ch, params.referenceBED)
+    processed = beds
+        | mapQFilterReads
+        | bedIntersectRestrictionSites
+        | countNormaliseBreaks
 
-    normalised_ch = countNormaliseBreaks(intersected_ch, params.normalisationValue)
-
-    collectStats(normalised_ch.collect())
-
-    plotStats(collectStats.out.collectedStatsTSV, params.experimentName)
-
+    stats = collectStats(processed.collect())
+    plotStats(stats.collectedStatsTSV, params.experimentName)
 }
