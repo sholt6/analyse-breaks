@@ -1,0 +1,5 @@
+name: bed-intersect
+channels:
+  - bioconda
+dependencies:
+  - bedtools==2.31

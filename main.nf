@@ -13,7 +13,7 @@ process mapQFilterReads {
 }
 
 process bedIntersectRestrictionSites {
-    conda 'bioconda::bedtools==2.31'
+    conda "$projectDir/env/bed-intersect.yml"
 
     input:
         tuple val(id), path(originalBED), path(filteredBED)
@@ -97,7 +97,7 @@ process plotStats {
 
 workflow {
 
-    beds = Channel.fromPath("${params.input_dir}/*.bed")
+    beds = Channel.fromPath("${params.inputDir}/*.bed")
                      .map( bed -> tuple(bed.baseName, bed))
 
     processed = beds
