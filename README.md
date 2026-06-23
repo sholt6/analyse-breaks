@@ -82,3 +82,10 @@ While not an outright validation of the validity of individual assignments, this
 
 - `{output_prefix}.qc_plots.png`: histogram, boxplot, and violin plot showing distribution of normalised break count values. This should be considered carefully for QC purposes, as small samples batches or those without a bimodal distribution may cluster poorly.
 
+In addition to these, various processes produce log files for tracking of inputs and the durations of individual functions.
+These include:
+- `mapQFilterReads`
+- `countNormaliseBreaks`
+- `plotStats`
+
+Logs are not published as results but may be found in the relevant process directoies.
