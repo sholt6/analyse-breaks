@@ -2,8 +2,8 @@
 
 import argparse
 import logging
-import csv
 import time
+import csv
 from pathlib import Path
 from typing import Callable
 from dataclasses import dataclass
