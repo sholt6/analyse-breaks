@@ -30,7 +30,7 @@ The pipeline carries out the following steps:
 ## Installation and usage
 This pipeline runs via Nextflow. It was written for v25.1 and has not been tested against other versions.
 
-By default it is executed with SLURM.
+By default it is executed with SLURM, it may be changed to local execution as instructed in `nextflow.config`.
 
 Software dependencies are managed with either Mamba (default) or Conda.
 
