@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
-import time
-import csv
 import argparse
 import logging
-from typing import Callable, Generator
+import time
+import csv
 from pathlib import Path
+from typing import Callable, Generator
 from collections.abc import Generator
 
 
