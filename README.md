@@ -28,7 +28,8 @@ The pipeline carries out the following steps:
    - Statistical testing of assigned groups (Mann-Whitney U test)
 
 ## Installation and usage
-This pipeline runs via Nextflow. It was written against v25.1 and has not been tested with other versions.
+This pipeline runs via Nextflow.
+It was written against v25.1 and has not been tested with other versions.
 
 By default it is executed with SLURM, it may be changed to local execution as instructed in `nextflow.config`.
 
@@ -69,7 +70,7 @@ The default settings will run analysis of the example dataset.
 Alter parameters with a copy of the config file or via the command line:
 ``` bash
 nextflow run main.nf \
-  --inputDir=/path/to/bed_dir/
+  --inputDir=/path/to/bed_dir/ \
   --referenceBED=/path/to/reference.bed
 ```
 
