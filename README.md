@@ -7,7 +7,7 @@
   - [Outputs](#outputs)
 
 A Nextflow pipeline designed to process INDUCE-Seq reads and provide sample-level information on break counts.
-Primary outputs include normalised break counts and intelligent assignment to control/treatment groups.
+Primary outputs include normalised break counts and assignment of samples to control/treatment groups.
 
 The pipeline assumes data has been through:
 - Mapping to reference genome
@@ -18,17 +18,17 @@ A reference file (BED format) of canonical cut sites must be provided, with one 
 
 ## Workflow
 The pipeline carries out the following steps:
-1. Filtering of each input BED based on MapQ value (default: 30)
-2. Further filtering of each BED to remove sites which do not appear in the reference file (default: `chr21_AsiSI_sites.t2t.be`)
-3. Per-sample normalisation of canonical breaks against total break count
-4. Aggregation of sample statistics
-5. Analysis of aggregate data to :
+1. **Filtering** of each input BED based on MapQ value (default: 30)
+2. Further **filtering** of each BED to remove sites which do not appear in the reference file (default: `chr21_AsiSI_sites.t2t.be`)
+3. Per-sample **normalisation** of canonical breaks against total break count
+4. **Aggregation** of sample statistics
+5. **Analysis** of aggregate data to :
    - Produce QC plots
    - Assign to control/treated/ambiguous groups (Gaussian Mixture model)
    - Statistical testing of assigned groups (Mann-Whitney U test)
 
 ## Installation and usage
-This pipeline runs via Nextflow. It was written for v25.1 and has not been tested against other versions.
+This pipeline runs via Nextflow. It was written against v25.1 and has not been tested with other versions.
 
 By default it is executed with SLURM, it may be changed to local execution as instructed in `nextflow.config`.
 
@@ -45,8 +45,7 @@ nextflow run main.nf
 The default `nextflow.config` included will run an example analysis using files included under the `data/` and `ref/` directories.
 
 ## Parameters
-Several parameters are exposed, with defaults provided via `nextflow.config`.
-Edit this file or provide values from the command line:
+Several parameters are exposed, with defaults provided via `nextflow.config`:
 ```
 # Location of a directory containing appropriately formatted BED files:
 params.inputDir = "${projectDir}/data/"
@@ -66,6 +65,13 @@ params.experimentName = "example"
 ```
 
 The default settings will run analysis of the example dataset.
+
+Alter parameters with a copy of the config file or via the command line:
+``` bash
+nextflow run main.nf \
+  --inputDir=/path/to/bed_dir/
+  --referenceBED=/path/to/reference.bed
+```
 
 The assumed filename format for input bed files is `{Sample_Name}.breakends.bed`.
 
