@@ -15,7 +15,7 @@ process mapQFilterReads {
 process bedIntersectRestrictionSites {
     conda "$projectDir/env/bed-intersect.yml"
 
-    publishDir "results/${params.experimentName}_beds", mode: 'copy'
+    publishDir "results/${params.experimentName}_beds", mode: 'copy', pattern: '*filtered.intersected.bed'
 
     input:
         tuple val(id), path(originalBED), path(filteredBED)
