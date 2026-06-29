@@ -1,0 +1,8 @@
+Control count:	7
+Treated count:	8
+Ambiguous count:	1
+Control median:	0.0
+Treated median:	2.9125
+Median difference:	2.9125
+Mann-Whitney statistic:	0.0
+Mann-Whitney p-value:	0.00079

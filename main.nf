@@ -15,6 +15,8 @@ process mapQFilterReads {
 process bedIntersectRestrictionSites {
     conda "$projectDir/env/bed-intersect.yml"
 
+    publishDir "results/${params.experimentName}_beds", mode: 'copy'
+
     input:
         tuple val(id), path(originalBED), path(filteredBED)
 
@@ -78,7 +80,7 @@ process collectStats {
 process plotStats {
     conda "$projectDir/env/plot-stats.yml"
 
-    publishDir 'results', mode: 'symlink'
+    publishDir 'results', mode: 'copy'
 
     input:
         path collectedStatsTSV

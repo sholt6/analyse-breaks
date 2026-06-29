@@ -16,6 +16,8 @@ The pipeline assumes data has been through:
 
 A reference file (BED format) of canonical cut sites must be provided, with one for AsiSI sites on GRCh38 chromosome 21 included by default.
 
+For an example output, please see the `results` directory included in this repo.
+
 ## Workflow
 The pipeline carries out the following steps:
 1. **Filtering** of each input BED based on MapQ value (default: 30)
@@ -88,6 +90,8 @@ While not an outright validation of the validity of individual assignments, this
 *Note that for small batches of samples, clustering may become less meaningful*.
 
 - `{output_prefix}.qc_plots.png`: histogram, boxplot, and violin plot showing distribution of normalised break count values. This should be considered carefully for QC purposes, as small samples batches or those without a bimodal distribution may cluster poorly.
+
+The filtered, intersected BED files are included in `results` as well.
 
 In addition to these, various processes produce log files for tracking of inputs and the durations of individual functions.
 These include:
